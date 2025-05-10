@@ -13,14 +13,16 @@ class ImageMode(str, Enum):
     Attributes:
         LOCAL: 로컬 파일 시스템에서 이미지를 로드합니다.
         GCS: Google Cloud Storage에서 이미지를 로드합니다.
+        S3: AWS S3에서 이미지를 로드합니다
 
     """
 
     LOCAL = "local"
     GCS = "gcs"
+    S3 = "s3"
 
 
-mode_str = os.getenv("IMAGE_MODE", "gcs")
+mode_str = os.getenv("IMAGE_MODE", "s3")
 
 try:
     IMAGE_MODE = ImageMode(mode_str)
