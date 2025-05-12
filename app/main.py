@@ -6,7 +6,7 @@ import torch
 from fastapi import FastAPI
 
 from app.api import api_router
-from app.config.settings import IMAGE_MODE
+from app.config.settings import IMAGE_MODE, MODEL_NAME, APP_ENV
 from app.middleware.error_handler import setup_exception_handler
 from app.model.clip_loader import load_clip_model
 from app.core.task_queue import SerialTaskQueue
@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
         device = "cpu"
     
     # CLIP 모델 초기화
-    clip_model, clip_preprocess = load_clip_model(device=device)
+    clip_model, clip_preprocess = load_clip_model(MODEL_NAME, device=device)
     
     loop = asyncio.get_running_loop()
 
