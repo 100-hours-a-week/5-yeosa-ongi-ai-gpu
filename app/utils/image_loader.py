@@ -1,4 +1,4 @@
-import os
+import os, requests
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
@@ -9,9 +9,10 @@ from google.cloud import storage
 from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
-from app.config.settings import ImageMode
+from app.config.settings import ImageMode, APP_ENV, AppEnv
 
 load_dotenv()
+
 
 # local
 LOCAL_IMG_PATH_raw = os.getenv("LOCAL_IMG_PATH")
@@ -25,6 +26,7 @@ S3_BUCKET_NAME_raw = os.getenv("S3_BUCKET_NAME")
 AWS_ACCESS_KEY_ID_raw = os.getenv("AWS_ACCESS_KEY")
 AWS_SECRET_ACCESS_KEY_raw = os.getenv("AWS_SECRET_KEY")
 AWS_REGION_raw = os.getenv("AWS_REGION")
+
 
 # local
 if LOCAL_IMG_PATH_raw is None:
@@ -136,6 +138,8 @@ class GCSImageLoader(BaseImageLoader):
             Image.Image: 로드된 PIL 이미지
 
         """
+        
+        
         blob = self.bucket.blob(file_name)
         image_bytes = blob.download_as_bytes()
         return Image.open(BytesIO(image_bytes)).convert("RGB")
@@ -159,7 +163,6 @@ class S3ImageLoader(BaseImageLoader):
     """Amazon S3에서 이미지를 로드하는 클래스입니다."""
 
     def __init__(
-
         self,
         bucket_name: str = S3_BUCKET_NAME,
         aws_access_key_id: str = AWS_ACCESS_KEY_ID,
@@ -183,20 +186,29 @@ class S3ImageLoader(BaseImageLoader):
         )
         self.executor = ThreadPoolExecutor(max_workers=10)
 
-    def _download(self, file_name: str) -> Image.Image:
+    def _download(self, file_ref: str) -> Image.Image:
         """
         S3에서 단일 이미지를 다운로드하고 RGB로 변환합니다.
 
         Args:
-            file_name (str): S3 내 파일 이름 (key)
+            file_ref (str): S3 내 파일 이름 (key)
 
         Returns:
             Image.Image: 로드된 PIL 이미지 객체
 
         """
-        response = self.s3.get_object(Bucket=self.bucket_name, Key=file_name)
-        image_bytes = response["Body"].read()
-        return Image.open(BytesIO(image_bytes)).convert("RGB")
+        if APP_ENV == AppEnv.PROD:
+            try:
+                response = requests.get(file_ref, timeout=5)
+                response.raise_for_status()
+                return Image.open(BytesIO(response.content)).convert("RGB")
+            except Exception as e:
+                raise RuntimeError(f"[S3ImageLoader:prod] 이미지 다운로드 실패 URL: {file_ref}") from e
+        else:
+            response = self.s3.get_object(Bucket=self.bucket_name, Key=file_ref)
+            image_bytes = response["Body"].read()
+            return Image.open(BytesIO(image_bytes)).convert("RGB")
+    
 
     async def load_images(self, filenames: list[str]) -> list[Image.Image]:
         """
