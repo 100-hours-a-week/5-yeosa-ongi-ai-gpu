@@ -38,8 +38,6 @@ async def lifespan(app: FastAPI):
     app.state.clip_model = clip_model
     app.state.clip_preprocess = clip_preprocess
     app.state.image_loader = get_image_loader(IMAGE_MODE)
-    app.state.embedding_queue = SerialTaskQueue()
-    app.state.embedding_queue.start()
     app.state.loop = loop
     if IMAGE_MODE == IMAGE_MODE.S3:
         if isinstance(app.state.image_loader, S3ImageLoader):
