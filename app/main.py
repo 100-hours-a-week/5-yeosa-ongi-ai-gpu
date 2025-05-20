@@ -10,7 +10,11 @@ from app.config.settings import IMAGE_MODE, MODEL_NAME, APP_ENV
 from app.middleware.error_handler import setup_exception_handler
 from app.model.clip_loader import load_clip_model
 from app.core.task_queue import SerialTaskQueue
-from app.utils.image_loader import get_image_loader
+from app.utils.image_loader import (
+    get_image_loader,
+    GCSImageLoader,
+    S3ImageLoader,
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,7 +41,19 @@ async def lifespan(app: FastAPI):
     app.state.embedding_queue = SerialTaskQueue()
     app.state.embedding_queue.start()
     app.state.loop = loop
+    if IMAGE_MODE == IMAGE_MODE.S3:
+        if isinstance(app.state.image_loader, S3ImageLoader):
+            await app.state.image_loader.init_client()
     yield
+
+    # 서버 종료 시 리소스 해제
+    if IMAGE_MODE == IMAGE_MODE.GCS:
+        if isinstance(app.state.image_loader, GCSImageLoader):
+            await app.state.image_loader.client.close()
+
+    if IMAGE_MODE == IMAGE_MODE.S3:
+        if isinstance(app.state.image_loader, S3ImageLoader):
+            await app.state.image_loader.close_client()
 
 app = FastAPI(lifespan=lifespan)
 
