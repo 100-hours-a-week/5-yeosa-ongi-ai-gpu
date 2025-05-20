@@ -23,12 +23,11 @@ async def embed_controller(request: Request):
     logger.info("임베딩 요청 수신 및 처리 시작")
 
     try:
-        payload = await request.json()  # ✅ JSON 기반 수신
+        payload = await request.json() 
         image_refs = payload["images"]
 
         logger.debug("파일명 목록 수신 완료", extra={"count": len(image_refs)})
 
-        # ✅ GPU 서버에서도 image_loader 사용
         image_loader = request.app.state.image_loader
         images = await image_loader.load_images(image_refs)
 
