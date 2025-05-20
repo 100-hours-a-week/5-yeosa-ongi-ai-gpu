@@ -20,7 +20,7 @@ def setup_exception_handler(app: FastAPI):
             response = await call_next(request)
             return response
         except Exception:
-            logger.exception("middleware error")
+            logger.error("middleware error")
             return JSONResponse(
                 status_code=500, content={"detail": "Internal Server Error"}
             )
