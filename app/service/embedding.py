@@ -37,6 +37,6 @@ def embed_images(
         # CPU로 결과 이동 및 저장
         batch_features = batch_features.cpu()
         for filename, feature in zip(batch_filenames, batch_features):
-            results[filename] = feature.numpy().tolist()  # numpy 배열을 리스트로 변환
+            results[filename] = feature.cpu()
 
     return results
