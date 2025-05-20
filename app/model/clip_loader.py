@@ -5,6 +5,8 @@ import clip
 import torch
 import torch.nn as nn
 
+from app.model.clip_preprocess import clip_preprocess_np
+
 logger = logging.getLogger(__name__)
 
 # 전역 모델 및 전처리기 인스턴스
@@ -52,7 +54,8 @@ def load_clip_model(
                     "device": str(device),
                 },
             )
-            _model, _preprocess = clip.load(model_name, device=device)
+            _model, _ = clip.load(model_name, device=device)
+            _preprocess = clip_preprocess_np
             _model.eval()
             logger.info("CLIP 모델 로드 완료")
         except Exception as e:
