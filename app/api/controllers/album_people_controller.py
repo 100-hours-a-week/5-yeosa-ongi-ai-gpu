@@ -14,7 +14,7 @@ from app.utils.logging_decorator import log_flow
 
 logger = logging.getLogger(__name__)
 
-PEOPLE_SEMAPHORE_SIZE = 5
+PEOPLE_SEMAPHORE_SIZE = 1
 people_semaphore = asyncio.Semaphore(PEOPLE_SEMAPHORE_SIZE)
 
 def format_elapsed(t: float) -> str:
@@ -51,8 +51,8 @@ async def people_controller(request: Request) -> JSONResponse:
 
         task_func = partial(cluster_faces, images, filenames, arcface_model, yolo_detector)
 
-        async with people_semaphore:
-            clustering_result = await loop.run_in_executor(None, task_func)
+        # async with people_semaphore:
+        clustering_result = await loop.run_in_executor(None, task_func)
 
         # ✅ 직렬화 및 응답 전송
         response_obj = {
