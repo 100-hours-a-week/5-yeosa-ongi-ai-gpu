@@ -55,6 +55,7 @@ def load_clip_model(
                 },
             )
             _model, _ = clip.load(model_name, device=device)
+            _model = _model.float()
             _preprocess = clip_preprocess_np
             _model.eval()
             logger.info("CLIP 모델 로드 완료")
