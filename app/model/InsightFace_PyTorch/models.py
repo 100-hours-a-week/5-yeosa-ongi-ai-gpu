@@ -111,8 +111,8 @@ class SEBlock(nn.Module):
 
     def forward(self, x):
         b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
+        y = self.avg_pool(x).reshape(b, c)
+        y = self.fc(y).reshape(b, c, 1, 1)
         return x * y
 
 
@@ -217,7 +217,7 @@ class ResNet(nn.Module):
 
         x = self.bn2(x)
         x = self.dropout(x)
-        x = x.view(x.size(0), -1)
+        x = x.reshape(x.size(0), -1)
         x = self.fc(x)
         x = self.bn3(x)
 
@@ -286,7 +286,7 @@ class ArcMarginModel(nn.Module):
         else:
             phi = torch.where(cosine > self.th, phi, cosine - self.mm)
         one_hot = torch.zeros(cosine.size(), device=device)
-        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        one_hot.scatter_(1, label.reshape(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= self.s
         return output
