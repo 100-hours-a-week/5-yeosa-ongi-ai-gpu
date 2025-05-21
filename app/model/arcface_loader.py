@@ -3,7 +3,7 @@ import torch
 from app.model.InsightFace_PyTorch.config import im_size
 from app.model.InsightFace_PyTorch.models import IRBlock, ResNet
 
-device = "cpu"  # or "cuda" if available
+device = "cuda" if torch.cuda.is_available() else "cpu"
 _arcface_model = None
 
 

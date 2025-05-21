@@ -1,6 +1,8 @@
+import torch
+
 from app.model.yoloface.face_detector import YoloDetector
 
-device = "cpu"  # or "cuda" if available
+device = "cuda" if torch.cuda.is_available() else "cpu"
 _yolo_detector = None
 
 
