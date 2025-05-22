@@ -49,35 +49,25 @@ async def people_controller(request: Request) -> JSONResponse:
 
         task_func = partial(cluster_faces, images, filenames, arcface_model, yolo_detector)
 
-        # async with people_semaphore:
-        clustering_result = await loop.run_in_executor(None, task_func)
-
-        # ✅ 직렬화 및 응답 전송
-        response_obj = {
-            "message": "success",
-            "data": clustering_result
-        }
-
-        t3 = time.time()
-        serialized = pickle.dumps(response_obj)
-        t4 = time.time()
-        print(f"[INFO] 응답 직렬화 완료: {format_elapsed(t4 - t3)}")
+        async with people_semaphore:
+            clustering_result = await loop.run_in_executor(None, task_func)
 
         logger.info("인물 클러스터링 완료", extra={"clusters": len(clustering_result)})
 
-        return Response(
-            content=serialized,
-            media_type="application/octet-stream"
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "success",
+                "data": clustering_result
+            }
         )
 
     except Exception as e:
         logger.error("인물 클러스터링 처리 중 예외 발생", exc_info=True, extra={"error": str(e)})
-        error_response = {
-            "message": "fail",
-            "data": {}
-        }
-        return Response(
-            content=pickle.dumps(error_response),
-            media_type="application/octet-stream",
-            status_code=500
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "fail",
+                "data": []
+            }
         )
