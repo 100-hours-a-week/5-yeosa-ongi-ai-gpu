@@ -1,66 +1,99 @@
-import logging
+import pickle
+import torch
+import time
 from functools import partial
-from typing import Dict, Any
+from datetime import datetime
 
-from fastapi import Request
-from fastapi.responses import JSONResponse
+from fastapi import Request, Response
 
-from app.schemas.album_schema import ImageRequest
 from app.service.embedding import embed_images
-from app.utils.logging_decorator import log_exception, log_flow
-
-logger = logging.getLogger(__name__)
+from app.utils.image_loader import get_image_loader  # GPU 서버도 image_loader 사용
+from app.utils.logging_decorator import log_flow
 
 DEFAULT_BATCH_SIZE = 16
-DEFAULT_DEVICE = "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
+def format_elapsed(t: float) -> str:
+    return f"{t * 1000:.2f} ms" if t < 1 else f"{t:.2f} s"
+
+def now_str() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 @log_flow
-async def embed_controller(req: ImageRequest, request: Request):
+async def embed_controller(request: Request):
     """
-    이미지 임베딩을 수행하는 컨트롤러입니다.
-
-    Args:
-        req: 이미지 파일명 목록을 포함한 요청 객체
-        request: FastAPI 요청 객체
-
-    Returns:
-        JSONResponse: 성공 메시지와 데이터를 포함한 응답
+    이미지 파일명을 받아 GPU 서버에서 직접 이미지 로딩, 임베딩 수행.
+    결과를 Pickle 바이너리로 반환.
     """
-    logger.info(
-        "이미지 임베딩 요청 처리 시작",
-        extra={"total_images": len(req.images)},
-    )
-    
-    image_refs = req.images
+    print("[START] GPU 서버: 임베딩 요청 수신")
 
-    image_loader = request.app.state.image_loader
-    images = await image_loader.load_images(image_refs)
+    try:
+        t0 = time.time()
+        receive_time_str = now_str()
 
-    logger.debug(
-        "이미지 로드 완료",
-        extra={"loaded_images": len(images)},
-    )
+        payload = await request.json()
+        image_refs = payload["images"]
+        client_send_time = payload.get("client_send_time")  # optional
 
-    clip_model = request.app.state.clip_model
-    clip_preprocess = request.app.state.clip_preprocess
-    loop = request.app.state.loop
-    
-    task_func = partial(
-        embed_images,
-        clip_model,
-        clip_preprocess,
-        images,
-        image_refs,
-        batch_size=32,
-        device="cuda"
-    )
+        print(f"[INFO] 요청 수신 시각: {receive_time_str}")
+        if client_send_time:
+            print(f"[INFO] 클라이언트 전송 시각: {client_send_time}")
 
-    # 임베딩 결과를 직접 반환
-    result = await loop.run_in_executor(None, task_func)
-    
-    logger.info(
-        "이미지 임베딩 완료",
-        extra={"processed_images": len(image_refs)},
-    )
-    return {"message": "success", "data": result}
+        # ✅ 이미지 로딩 시간 측정
+        t1 = time.time()
+        image_loader = request.app.state.image_loader
+        images = await image_loader.load_images(image_refs)
+        t2 = time.time()
+        print(f"[INFO] 이미지 로딩 및 디코딩 완료: {format_elapsed(t2 - t1)}")
+
+        # ✅ 임베딩
+        clip_model = request.app.state.clip_model
+        clip_preprocess = request.app.state.clip_preprocess
+        loop = request.app.state.loop
+
+        task_func = partial(
+            embed_images,
+            clip_model,
+            clip_preprocess,
+            images,
+            image_refs,
+            batch_size=DEFAULT_BATCH_SIZE,
+            device=device
+        )
+
+        t3 = time.time()
+        result = await loop.run_in_executor(None, task_func)
+        t4 = time.time()
+        print(f"[INFO] 임베딩 완료: {format_elapsed(t4 - t3)}")
+
+        # ✅ 직렬화 시간 측정
+        t5 = time.time()
+        response_obj = {
+            "message": "success",
+            "data": result
+        }
+        serialized = pickle.dumps(response_obj)
+        t6 = time.time()
+        print(f"[INFO] 응답 직렬화 완료: {format_elapsed(t6 - t5)}")
+
+        # ✅ 응답 직전 시각
+        response_send_time_str = now_str()
+        print(f"[INFO] 응답 전송 시각: {response_send_time_str}")
+        print(f"[INFO] 총 처리 시간: {format_elapsed(t6 - t0)}")
+
+        return Response(
+            content=serialized,
+            media_type="application/octet-stream"
+        )
+
+    except Exception as e:
+        print(f"[EXCEPTION] 임베딩 처리 중 오류 발생: {e}")
+        error_response = {
+            "message": "fail",
+            "data": {}
+        }
+        return Response(
+            content=pickle.dumps(error_response),
+            media_type="application/octet-stream",
+            status_code=500
+        )
