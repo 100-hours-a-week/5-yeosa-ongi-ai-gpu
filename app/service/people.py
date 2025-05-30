@@ -63,16 +63,16 @@ def cluster_faces(
     bboxes_list, landmarks_list = detector.predict(np_images)
 
     crops = []
-    mapped_names = []
+    metadata = []  # (file_name, bbox) 튜플 저장
 
     for idx, (img, bboxes, landmarks) in enumerate(
         zip(np_images, bboxes_list, landmarks_list)
     ):
         if len(landmarks) > 0:
-            aligned = detector.align(img, landmarks)
-            for face in aligned:
+            aligned_faces = detector.align(img, landmarks)
+            for face_idx, face in enumerate(aligned_faces):
                 crops.append(face)
-                mapped_names.append(file_names[idx])
+                metadata.append((file_names[idx], bboxes[face_idx]))
 
     if not crops:
         return []
@@ -104,7 +104,6 @@ def cluster_faces(
         dists = cosine_distances(cluster_embeds)
         avg_dist = np.mean(dists[np.triu_indices(n, k=1)])
         max_dist = np.max(dists[np.triu_indices(n, k=1)])
-
         if n < 5:
             if max_dist < 0.6:
                 valid_labels.append(label)
@@ -112,18 +111,29 @@ def cluster_faces(
             if avg_dist < 0.5:
                 valid_labels.append(label)
 
-    # 유효 클러스터만 반영한 라벨로 재구성
+    # 유효 라벨만 필터링
     filtered_labels = np.array([
         label if label in valid_labels else -1
         for label in labels
     ])
 
-    # 결과 정리
-    result = defaultdict(set)
-    for label, name in zip(filtered_labels, mapped_names):
+    # 클러스터링 결과 구조화
+    cluster_dict = defaultdict(list)
+    for label, (name, bbox) in zip(filtered_labels, metadata):
         if label != -1:
-            result[f"person_{label}"].add(name)
+            cluster_dict[label].append((name, bbox))
 
-    # 반환: 리스트로 변환
-    sorted_result = sorted(result.values(), key=lambda names: len(names), reverse=True)
-    return [list(names) for names in sorted_result]
+    # 프론트에 맞는 반환 형식 구성
+    result = []
+    for cluster in sorted(cluster_dict.values(), key=len, reverse=True):
+        images = [item[0] for item in cluster]
+        rep_image, rep_bbox = cluster[0]
+        result.append({
+            "images": images,
+            "representative_face": {
+                "image": rep_image,
+                "bbox": rep_bbox
+            }
+        })
+
+    return result
