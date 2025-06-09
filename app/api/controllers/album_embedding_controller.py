@@ -40,6 +40,7 @@ async def embed_controller(request: Request):
             print(f"[INFO] 클라이언트 전송 시각: {client_send_time}")
 
         # ✅ 이미지 로딩 시간 측정
+        print(f"[INFO] 이미지 로딩 및 디코딩 시작")
         t1 = time.time()
         image_loader = request.app.state.image_loader
         images = await image_loader.load_images(image_refs)
@@ -61,12 +62,10 @@ async def embed_controller(request: Request):
             device=device
         )
 
-        t3 = time.time()
         result = await loop.run_in_executor(None, task_func)
-        t4 = time.time()
-        print(f"[INFO] 임베딩 완료: {format_elapsed(t4 - t3)}")
 
         # ✅ 직렬화 시간 측정
+        print(f"[INFO] 응답 직렬화 시작")
         t5 = time.time()
         response_obj = {
             "message": "success",
