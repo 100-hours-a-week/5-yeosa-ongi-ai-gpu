@@ -171,7 +171,6 @@ class GCSImageLoader(BaseImageLoader):
             bytes: 로드된 이미지 바이트
 
         """
-        logger.info('이미지 로딩 시작')
         print(f"[INFO] 이미지 로딩 시작")
         start = time.time()
         image_bytes = await self.client.download(
