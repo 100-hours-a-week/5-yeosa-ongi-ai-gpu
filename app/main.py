@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from app.api import api_router
 from app.config.settings import IMAGE_MODE, MODEL_NAME, APP_ENV
 from app.middleware.error_handler import setup_exception_handler
-from app.model.clip_loader import load_clip_model
+from app.model.clip_preprocess import clip_preprocess_np
 from app.model.arcface_loader import load_arcface_model
 from app.model.yolo_detector_loader import load_yolo_detector
 from app.utils.image_loader import (
@@ -32,12 +32,11 @@ async def lifespan(app: FastAPI):
         device = "cpu"
     
     # CLIP 모델 초기화
-    clip_model, clip_preprocess = load_clip_model(MODEL_NAME, device=device)
+    clip_preprocess = clip_preprocess_np
     arcface_model = load_arcface_model()
     yolo_detector = load_yolo_detector()
     loop = asyncio.get_running_loop()
 
-    app.state.clip_model = clip_model
     app.state.clip_preprocess = clip_preprocess
     app.state.arcface_model = arcface_model
     app.state.yolo_detector = yolo_detector
