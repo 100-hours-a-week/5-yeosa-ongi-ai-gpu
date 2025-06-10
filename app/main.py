@@ -33,13 +33,9 @@ async def lifespan(app: FastAPI):
     
     # CLIP 모델 초기화
     clip_preprocess = clip_preprocess_np
-    arcface_model = load_arcface_model()
-    yolo_detector = load_yolo_detector()
     loop = asyncio.get_running_loop()
 
     app.state.clip_preprocess = clip_preprocess
-    app.state.arcface_model = arcface_model
-    app.state.yolo_detector = yolo_detector
     app.state.image_loader = get_image_loader(IMAGE_MODE)
     app.state.loop = loop
     if IMAGE_MODE == IMAGE_MODE.S3:
