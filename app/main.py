@@ -1,6 +1,17 @@
 import torch.multiprocessing as mp
 
-mp.set_start_method('spawn')
+try:
+    # 현재 설정된 시작 메서드를 확인하고, 없으면 'spawn'으로 설정
+    if mp.get_start_method(allow_none=True) is None:
+        mp.set_start_method('spawn', force=True) # force=True 추가 권장
+        print("DEBUG: multiprocessing start method set to 'spawn'.")
+    else:
+        # 이미 설정되어 있다면, 어떤 메서드로 설정되었는지 확인
+        print(f"DEBUG: multiprocessing start method already set to '{mp.get_start_method()}'.")
+
+except RuntimeError:
+    print("DEBUG: RuntimeError when setting multiprocessing start method (possibly already set or unexpected).")
+    pass
 
 import os
 import asyncio
