@@ -6,6 +6,8 @@ from datetime import datetime
 
 from fastapi import Request, Response
 
+from app.config.settings import MODEL_NAME
+from app.model.clip_loader import load_clip_model
 from app.service.embedding import embed_images
 from app.utils.image_loader import get_image_loader  # GPU 서버도 image_loader 사용
 from app.utils.logging_decorator import log_flow
@@ -47,6 +49,9 @@ async def embed_controller(request: Request):
         print(f"[INFO] 이미지 로딩 및 디코딩 완료: {format_elapsed(t2 - t1)}")
 
         # ✅ 임베딩
+        if not hasattr(request.app.state, "clip_model"):
+                request.app.state.clip_model = load_clip_model(MODEL_NAME, device=device)
+
         clip_model = request.app.state.clip_model
         clip_preprocess = request.app.state.clip_preprocess
         loop = request.app.state.loop
