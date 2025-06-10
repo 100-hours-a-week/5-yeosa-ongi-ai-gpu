@@ -48,7 +48,7 @@ async def embed_controller(request: Request):
         t2 = time.time()
         print(f"[INFO] 이미지 로딩 및 디코딩 완료: {format_elapsed(t2 - t1)}")
 
-        # ✅ 임베딩
+        # 임베딩
         if not hasattr(request.app.state, "clip_model"):
                 request.app.state.clip_model = load_clip_model(MODEL_NAME, device=device)
 
