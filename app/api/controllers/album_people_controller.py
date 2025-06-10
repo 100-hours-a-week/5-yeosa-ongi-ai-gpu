@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse
 
 from app.service.people import cluster_faces
 from app.utils.logging_decorator import log_flow
+from app.model.arcface_loader import load_arcface_model
+from app.model.yolo_detector_loader import load_yolo_detector
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,11 @@ async def people_controller(request: Request) -> JSONResponse:
     logger.info("인물 클러스터링 요청 처리 시작")
 
     try:
+        if not hasattr(request.app.state, "arcface_model"):
+                request.app.state.arcface_model = load_arcface_model()
+        if not hasattr(request.app.state, "yolo_detector"):
+                request.app.state.yolo_detector = load_yolo_detector()
+
         arcface_model = request.app.state.arcface_model
         yolo_detector = request.app.state.yolo_detector
         image_loader = request.app.state.image_loader
