@@ -34,7 +34,7 @@ def load_clip_model(
     Raises:
         RuntimeError: CLIP 모델 로드 실패 시
     """
-    global _model, _preprocess
+    global _model
     
     # 1. 디바이스 설정
     if device is None:
@@ -56,7 +56,6 @@ def load_clip_model(
             )
             _model, _ = clip.load(model_name, device=device)
             _model = _model.float()
-            _preprocess = clip_preprocess_np
             _model.eval()
             logger.info("CLIP 모델 로드 완료")
         except Exception as e:
@@ -68,4 +67,4 @@ def load_clip_model(
     else:
         logger.debug("기존 CLIP 모델 인스턴스 재사용")
     
-    return _model, _preprocess
+    return _model
