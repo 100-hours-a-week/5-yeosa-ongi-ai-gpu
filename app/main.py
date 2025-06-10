@@ -3,6 +3,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import torch
+import torch.multiprocessing as mp
 from fastapi import FastAPI
 
 from app.api import api_router
@@ -16,6 +17,8 @@ from app.utils.image_loader import (
     GCSImageLoader,
     S3ImageLoader,
 )
+
+mp.set_start_method('spawn')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
