@@ -69,16 +69,16 @@ AWS_REGION: str = AWS_REGION_raw
 # 공통 디코더
 def decode_image_cv2(image_bytes: bytes, label: str) -> np.ndarray:
     # print(f"[INFO] 디코딩 시작")
-    # start = time.time()
+    start = time.time()
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     #end = time.time()
     #start2 = time.time()
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # end = time.time()
+    end = time.time()
     #print(f"디코딩 시간({label}): {end - start:.6f}초")
     #print(f"색상공간 변환 시간({label}): {end2 - start2:.6f}초")
-    # print(f"[INFO] 디코딩 완료 : {format_elapsed(end - start)}")
+    print(f"[INFO] 디코딩 완료 : {format_elapsed(end - start)}")
     return img
 
 class BaseImageLoader(ABC):
@@ -172,13 +172,13 @@ class GCSImageLoader(BaseImageLoader):
 
         """
         # print(f"[INFO] 이미지 로딩 시작")
-        # start = time.time()
+        start = time.time()
         image_bytes = await self.client.download(
             bucket=self.bucket_name, object_name=file_name
         )
         # image_bytes = await blob.download_as_bytes(client=self.client)
-        # end = time.time()
-        # print(f"[INFO] 이미지 로딩 완료 : {format_elapsed(end - start)}")
+        end = time.time()
+        print(f"[INFO] 이미지 로딩 완료 : {format_elapsed(end - start)}")
         # 
         return image_bytes
 
