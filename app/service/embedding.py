@@ -10,7 +10,7 @@ def embed_images(
 ):
     # 이미지 전처리를 배치 단위로 수행
     preprocessed_batches = []
-    # print(f"[INFO] 전처리 시작")
+    print(f"[INFO] 전처리 시작")
     t1 = time.time()
     # ThreadPoolExecutor 생성
     with ThreadPoolExecutor() as executor:
@@ -21,22 +21,21 @@ def embed_images(
             batch_images = images[i:i + batch_size]
             # 병렬로 전처리 수행
             preprocessed_batch = list(executor.map(preprocess_func, batch_images))
-            preprocessed_batch = torch.stack(preprocessed_batch)
-            # preprocessed_batch = preprocess(batch_images)
+            preprocessed_batch = torch.stack(preprocessed_batch).to(device)
             preprocessed_batches.append(preprocessed_batch)
     t2 = time.time()
     print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
     # 결과를 저장할 딕셔너리
     results = {}
     
-    # print(f"[INFO] 임베딩 시작")
+    print(f"[INFO] 임베딩 시작")
     t1 = time.time()
     # 배치 단위로 임베딩 수행
     for i, batch in enumerate(preprocessed_batches):
         batch_filenames = filenames[i * batch_size:(i + 1) * batch_size]
         
         # GPU로 데이터 이동
-        image_input = batch.to(device)
+        image_input = batch
         
         # 임베딩 생성
         with torch.no_grad():

@@ -3,6 +3,7 @@ import torch
 import time
 from functools import partial
 from datetime import datetime
+import numpy as np
 
 from fastapi import Request, Response
 
@@ -40,12 +41,13 @@ async def embed_controller(request: Request):
             print(f"[INFO] 클라이언트 전송 시각: {client_send_time}")
 
         # ✅ 이미지 로딩 시간 측정
-        print(f"[INFO] 이미지 로딩 및 디코딩 시작")
-        t1 = time.time()
-        image_loader = request.app.state.image_loader
-        images = await image_loader.load_images(image_refs)
-        t2 = time.time()
-        print(f"[INFO] 이미지 로딩 및 디코딩 완료: {format_elapsed(t2 - t1)}")
+        # print(f"[INFO] 이미지 로딩 및 디코딩 시작")
+        # t1 = time.time()
+        # image_loader = request.app.state.image_loader
+        # images = await image_loader.load_images(image_refs)
+        # t2 = time.time()
+        # print(f"[INFO] 이미지 로딩 및 디코딩 완료: {format_elapsed(t2 - t1)}")
+        images =  [np.random.randint(0, 256, (1080, 1920, 3), dtype=np.uint8) for _ in image_refs]
 
         # ✅ 임베딩
         clip_model = request.app.state.clip_model
