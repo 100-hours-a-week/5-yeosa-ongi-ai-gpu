@@ -11,7 +11,7 @@ from app.service.embedding import embed_images
 from app.utils.image_loader import get_image_loader  # GPU 서버도 image_loader 사용
 from app.utils.logging_decorator import log_flow
 
-DEFAULT_BATCH_SIZE = 16
+DEFAULT_BATCH_SIZE = 64
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def format_elapsed(t: float) -> str:
