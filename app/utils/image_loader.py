@@ -159,6 +159,8 @@ class GCSImageLoader(BaseImageLoader):
         """
         self.client = Storage(service_file=key_path)
         self.bucket_name = bucket_name
+        self.decode_executor = ThreadPoolExecutor(max_workers=8)
+        
 
     async def _download(self, file_name: str) -> bytes:
         """
@@ -183,14 +185,14 @@ class GCSImageLoader(BaseImageLoader):
         return image_bytes
 
     async def _process_single_file(
-        self, filename: str, executor=None
+        self, filename: str,
     ) -> np.ndarray:
         loop = asyncio.get_running_loop()
         image_bytes = await self._download(filename)
         
         start = time.time()
         decoded_img, decoding_time = await loop.run_in_executor(
-            executor, decode_image_cv2, image_bytes, "gcs"
+            self.decode_executor, decode_image_cv2, image_bytes, "gcs"
         )
         end = time.time()
         print(f"[INFO] 디코딩 대기 : {format_elapsed(end - start - decoding_time)}")
@@ -208,7 +210,7 @@ class GCSImageLoader(BaseImageLoader):
 
         """
         #start = time.time()
-        tasks = [self._process_single_file(f, None) for f in filenames]
+        tasks = [self._process_single_file(f) for f in filenames]
 
         result = await asyncio.gather(*tasks)
         #end = time.time()
