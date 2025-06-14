@@ -16,23 +16,23 @@ def embed_images(
     # with ThreadPoolExecutor() as executor:
     #     # 전처리 함수를 lambda로 정의
     #     preprocess_func = lambda img: preprocess(img)
-    with ThreadPoolExecutor() as executor:
-        # 전처리 함수를 lambda로 정의
-        preprocess_func = lambda img: preprocess(img)
+    # with ThreadPoolExecutor() as executor:
+    #     # 전처리 함수를 lambda로 정의
+    #     preprocess_func = lambda img: preprocess(img)
         
-        for i in range(0, len(images), batch_size):
-            batch_images = images[i:i + batch_size]
-	        # 병렬로 전처리 수행
-            preprocessed_batch = list(executor.map(preprocess_func, batch_images))
-            preprocessed_batch = torch.stack(preprocessed_batch).to('cuda')
-            preprocessed_batches.append(preprocessed_batch)
+    #     for i in range(0, len(images), batch_size):
+    #         batch_images = images[i:i + batch_size]
+	#         # 병렬로 전처리 수행
+    #         preprocessed_batch = list(executor.map(preprocess_func, batch_images))
+    #         preprocessed_batch = torch.stack(preprocessed_batch).to('cuda')
+    #         preprocessed_batches.append(preprocessed_batch)
         
-    # for i in range(0, len(images), batch_size):
-    #     batch_images = images[i:i + batch_size]
-    #     # 병렬로 전처리 수행
-    #     preprocessed_batch = preprocess(batch_images)
-    #     preprocessed_batch = preprocessed_batch.to('cuda')
-    #     preprocessed_batches.append(preprocessed_batch)
+    for i in range(0, len(images), batch_size):
+        batch_images = images[i:i + batch_size]
+        # 병렬로 전처리 수행
+        preprocessed_batch = preprocess(batch_images)
+        preprocessed_batch = preprocessed_batch.to('cuda')
+        preprocessed_batches.append(preprocessed_batch)
     t2 = time.time()
     print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
     # 결과를 저장할 딕셔너리
