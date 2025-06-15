@@ -1,11 +1,14 @@
 import torch
 import time
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 def format_elapsed(t: float) -> str:
     return f"{t * 1000:.2f} ms" if t < 1 else f"{t:.2f} s"
 
-def embed_images(
+embed_executor = ThreadPoolExecutor(max_workers=8)
+
+async def embed_images(
     model, preprocess, images, filenames, batch_size=32, device="cuda"
 ):
     # 이미지 전처리를 배치 단위로 수행
@@ -27,12 +30,17 @@ def embed_images(
     #         preprocessed_batch = torch.stack(preprocessed_batch).to('cuda')
     #         preprocessed_batches.append(preprocessed_batch)
         
-    for i in range(0, len(images), batch_size):
-        batch_images = images[i:i + batch_size]
-        # 병렬로 전처리 수행
-        preprocessed_batch = preprocess(batch_images)
-        preprocessed_batch = preprocessed_batch.to('cuda')
-        preprocessed_batches.append(preprocessed_batch)
+    # for i in range(0, len(images), batch_size):
+    #     batch_images = images[i:i + batch_size]
+    #     # 병렬로 전처리 수행
+    #     preprocessed_batch = preprocess(batch_images)
+    #     preprocessed_batch = preprocessed_batch.to('cuda')
+    #     preprocessed_batches.append(preprocessed_batch)
+    loop = asyncio.get_running_loop()
+    preprocess_to_cuda = lambda images: preprocess(images).to('cuda')
+    preprocessed_batches = await asyncio.gather(*[
+    loop.run_in_executor(embed_executor, preprocess_to_cuda, images[i:i+batch_size]) for i in range(0, len(images), batch_size)])
+
     t2 = time.time()
     print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
     # 결과를 저장할 딕셔너리

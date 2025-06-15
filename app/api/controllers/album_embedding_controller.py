@@ -53,19 +53,20 @@ async def embed_controller(request: Request):
         # ✅ 임베딩
         clip_model = request.app.state.clip_model
         clip_preprocess = request.app.state.clip_preprocess
-        loop = request.app.state.loop
+        # loop = request.app.state.loop
 
-        task_func = partial(
-            embed_images,
-            clip_model,
-            clip_preprocess,
-            images,
-            image_refs,
-            batch_size=DEFAULT_BATCH_SIZE,
-            device=device
-        )
+        # task_func = partial(
+        #     embed_images,
+        #     clip_model,
+        #     clip_preprocess,
+        #     images,
+        #     image_refs,
+        #     batch_size=DEFAULT_BATCH_SIZE,
+        #     device=device
+        # )
 
-        result = await loop.run_in_executor(None, task_func)
+        # result = await loop.run_in_executor(None, task_func)
+        result = await embed_images(clip_model, clip_preprocess, images, image_refs, batch_size=DEFAULT_BATCH_SIZE, device=device)
 
         # ✅ 직렬화 시간 측정
         print(f"[INFO] 응답 직렬화 시작")
