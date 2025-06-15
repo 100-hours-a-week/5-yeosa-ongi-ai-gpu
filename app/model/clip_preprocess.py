@@ -21,8 +21,8 @@ import torch
 #     return (tensor - MEAN) / STD
 
 
-MEAN = torch.tensor([0.48145466, 0.4578275, 0.40821073]).view(1, 3, 1, 1)
-STD = torch.tensor([0.26862954, 0.26130258, 0.27577711]).view(1, 3, 1, 1)
+# MEAN = torch.tensor([0.48145466, 0.4578275, 0.40821073]).view(1, 3, 1, 1)
+# STD = torch.tensor([0.26862954, 0.26130258, 0.27577711]).view(1, 3, 1, 1)
 
 # def clip_preprocess_np(images: list[np.ndarray]) -> torch.Tensor:
 # 	resized = [cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC) for img in images]
