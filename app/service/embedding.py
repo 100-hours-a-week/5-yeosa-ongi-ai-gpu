@@ -37,9 +37,8 @@ async def embed_images(
     #     preprocessed_batch = preprocessed_batch.to('cuda')
     #     preprocessed_batches.append(preprocessed_batch)
     loop = asyncio.get_running_loop()
-    preprocess_to_cuda = lambda images: preprocess(images).to('cuda')
     preprocessed_batches = await asyncio.gather(*[
-    loop.run_in_executor(embed_executor, preprocess_to_cuda, images[i:i+batch_size]) for i in range(0, len(images), batch_size)])
+    loop.run_in_executor(embed_executor, preprocess, images[i:i+batch_size]) for i in range(0, len(images), batch_size)])
 
     t2 = time.time()
     print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
@@ -53,7 +52,7 @@ async def embed_images(
         batch_filenames = filenames[i * batch_size:(i + 1) * batch_size]
         
         # GPU로 데이터 이동
-        image_input = batch
+        image_input = batch.to('cuda')
         
         # 임베딩 생성
         with torch.no_grad():
