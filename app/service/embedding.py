@@ -1,6 +1,7 @@
 import torch
 import time
 from concurrent.futures import ThreadPoolExecutor
+from torch.profiler import profile, record_function, ProfilerActivity
 
 def format_elapsed(t: float) -> str:
     return f"{t * 1000:.2f} ms" if t < 1 else f"{t:.2f} s"
@@ -27,29 +28,37 @@ def embed_images(
     #         preprocessed_batch = torch.stack(preprocessed_batch).to('cuda')
     #         preprocessed_batches.append(preprocessed_batch)
         
-    for i in range(0, len(images), batch_size):
-        batch_images = images[i:i + batch_size]
-        # 병렬로 전처리 수행
-        preprocessed_batch = preprocess(batch_images)
-        preprocessed_batch = preprocessed_batch.to('cuda')
-        preprocessed_batches.append(preprocessed_batch)
-    t2 = time.time()
-    print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
-    # 결과를 저장할 딕셔너리
-    results = {}
-    
-    print(f"[INFO] 임베딩 시작")
-    t1 = time.time()
-    # 배치 단위로 임베딩 수행
-    for i, batch in enumerate(preprocessed_batches):
-        batch_filenames = filenames[i * batch_size:(i + 1) * batch_size]
+    with profile(
+        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+        record_shapes=True,
+        with_stack=True,
+        on_trace_ready=torch.profiler.tensorboard_trace_handler('./log')
+    ) as prof:
+        for i in range(0, len(images), batch_size):
+            batch_images = images[i:i + batch_size]
+                # 병렬로 전처리 수행
+            with record_function("preprocess"):
+                preprocessed_batch = preprocess(batch_images)
+            preprocessed_batch = preprocessed_batch
+            preprocessed_batches.append(preprocessed_batch)
+        t2 = time.time()
+        print(f"[INFO] 전처리 완료: {format_elapsed(t2 - t1)}")
+        # 결과를 저장할 딕셔너리
+        results = {}
         
-        # GPU로 데이터 이동
-        image_input = batch
-        
-        # 임베딩 생성
-        with torch.no_grad():
-            batch_features = model.encode_image(image_input)
+        print(f"[INFO] 임베딩 시작")
+        t1 = time.time()
+        # 배치 단위로 임베딩 수행
+        for i, batch in enumerate(preprocessed_batches):
+            batch_filenames = filenames[i * batch_size:(i + 1) * batch_size]
+            
+            # GPU로 데이터 이동
+            image_input = batch
+            
+            # 임베딩 생성
+            with record_function("embedding"):
+                with torch.no_grad():
+                    batch_features = model.encode_image(image_input)
         
         # CPU로 결과 이동 및 저장
         batch_features = batch_features.cpu()
