@@ -58,6 +58,7 @@ async def lifespan(app: FastAPI):
             await app.state.image_loader.close_client()
 
 app = FastAPI(lifespan=lifespan)
+torch.set_num_threads(1)
 
 setup_exception_handler(app)
 
