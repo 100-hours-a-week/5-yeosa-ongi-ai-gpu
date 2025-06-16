@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+images/
+.venv
+.env
+.vscode/settings.json
+**/insight-face-v3.pt

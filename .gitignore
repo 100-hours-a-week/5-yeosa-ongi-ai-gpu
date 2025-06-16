@@ -1,0 +1,30 @@
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS system files
+.DS_Store
+
+# Local image files (not to be pushed)
+images/
+clip_model/
+
+Users/
+
+# Virtual environment
+.venv/
+
+**/insight-face-v3.pt
+.python-version
+
+# InsightFace_PyTorch
+.idea/
+runs/
+data/CASIA-WebFace
+data/lfw_funneled
+*.tar
+
+ongi-test-4247101f2463.json
+.env
