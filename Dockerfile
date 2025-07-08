@@ -48,7 +48,7 @@ COPY app/ app/
 
 # 11. PYTHONPATH 설정 및 포트 노출
 ENV PYTHONPATH=/app
-EXPOSE 8000
+EXPOSE 8001
 
 # 12. FastAPI 실행
-CMD ["python3.10", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python3.10", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "2"]

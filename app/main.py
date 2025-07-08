@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import torch
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api import api_router
 from app.config.settings import IMAGE_MODE, MODEL_NAME, APP_ENV
@@ -63,3 +64,5 @@ torch.set_num_threads(1)
 setup_exception_handler(app)
 
 app.include_router(api_router)
+
+Instrumentator().instrument(app).expose(app)
